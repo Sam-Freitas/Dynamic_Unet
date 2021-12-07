@@ -23,23 +23,32 @@ dataset = pd.read_csv('dataset.csv')
  
 total = len(dataset) #set variables
 test_split = 0.2
-height = 128
-width = 128
+height = 512
+width = 512
 channels = 3 
 batch_size = 32
 
 num_layers_of_unet = 4
 starting_kernal_size = 16
 
+model = dynamic_unet_cnn(height,width,channels,
+    num_layers = num_layers_of_unet,starting_filter_size = starting_kernal_size, use_dropout = False)
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'], run_eagerly = True)
+# model.summary() #display model summary
+
+try:
+    tf.keras.utils.plot_model(
+        model, to_file='model.png', show_shapes=True, show_dtype=False,
+        show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96
+    )
+except:
+    print("Exporting model to png failed")
+    print("Necessary packages: pydot (pip) and graphviz (brew)")
+
 #######Training
 train, test = train_test_split(dataset, test_size = test_split, random_state = 50) #randomly split up the test and training datasets
 X_train, y_train = data_generator(train, image_path, mask_path, height, width) #set up training data
 y_train = y_train / 255 #thresh y_training set
-
-# model = unet_cnn(height,width,channels) #call unet model function and compile 
-model = dynamic_unet_cnn(height,width,channels,num_layers_of_unet,starting_kernal_size)
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'], run_eagerly = True)
-model.summary() #display model summary
 
 model_path = "lightsaver_weights.h5" #store model here
 checkpoint = ModelCheckpoint(model_path,monitor="val_loss",mode="min",save_best_only = True,verbose=1) #use checkpoint instead of sequential() module
