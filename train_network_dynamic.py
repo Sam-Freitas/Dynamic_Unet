@@ -1,5 +1,3 @@
-#Courtney Comrie and Sam Freitas
-
 import numpy as np #import needed libraries and commands
 import pandas as pd 
 import matplotlib.pyplot as plt
@@ -9,80 +7,20 @@ import os
 import sys
 from tqdm import tqdm
 import random
-import warnings
-from itertools import chain
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.layers import Input, Dropout, Lambda, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate
+from tensorflow.keras.models import load_model
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras import backend as K
 import tensorflow as tf
 
-from dynamic_unet import dynamic_unet_cnn
+from dynamic_unet import dynamic_unet_cnn, plot_figures, plot_acc_loss, data_generator
 
 plt.ion() #turn ploting on
 
-#dataset_path = r"C:\Users\cjoy1\Documents\Grad School\Second Year Spring\ECE 523\Homework\Final_Project\mr_images_png" #initialize paths and dataset
 dataset_path = os.getcwd()
 image_path = os.path.join(dataset_path, "images")
 mask_path = os.path.join(dataset_path,"masks")
 dataset = pd.read_csv('dataset.csv')
-
-def data_generator(dataset, image_path, mask_path, height, width): #function for generating data
-    X_train = np.zeros((len(dataset),height,width,3), dtype = np.uint8) #initialize training sets (and testing sets)
-    y_train = np.zeros((len(dataset),height,width,1), dtype = np.uint8)
-
-    sys.stdout.flush() #write everything to buffer ontime 
-
-    for i in tqdm(range(len(dataset)),total=len(dataset)): #iterate through datatset and build X_train,y_train
-
-        new_image_path = os.path.join(image_path,dataset.iloc[i][0])
-        new_mask_path = os.path.join(mask_path,dataset.iloc[i][1])
-
-        image = imread(new_image_path)
-        mask = imread(new_mask_path)[:,:,:1]
-
-        img_resized = cv2.resize(image,(height,width))
-        mask_resized = cv2.resize(mask,(height,width))
-
-        mask_resized = np.expand_dims(mask_resized,axis=2)
-
-        # img_resized = resize(image,(height,width), mode = 'constant',preserve_range = True)
-        # mask_resized = resize(mask, (height,width), mode = 'constant', preserve_range = True)
-
-        X_train[i] = img_resized
-        y_train[i] = mask_resized
-
-    return X_train, y_train
-
-def plot_figures(image,orig_mask,pred_mask,num): #function for plotting figures
-    plt.figure(num,figsize=(12,12))
-    plt.subplot(131)
-    plt.imshow(image)
-    plt.title("MR Image")
-    plt.subplot(132)
-    plt.imshow(orig_mask.squeeze(),cmap='gray')
-    plt.title("Original Mask")
-    plt.subplot(133)
-    plt.imshow(pred_mask.squeeze(),cmap='gray')
-    plt.title('Predicted Mask')
-
-def plot_acc_loss(results): #plot accuracy and loss
-    plt.plot(results.history['accuracy'])
-    plt.plot(results.history['val_accuracy'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
-        
-    plt.plot(results.history['loss'])
-    plt.plot(results.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
  
-
 total = len(dataset) #set variables
 test_split = 0.2
 height = 128

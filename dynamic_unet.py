@@ -2,13 +2,17 @@ from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Input, Dropout, Lambda, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras import backend as K
+import matplotlib.pyplot as plt
 import tensorflow as tf
+import numpy as np
+import sys
+import tqdm
+import cv2
+import os
 
 def dynamic_unet_cnn(height,width,channels,num_layers,starting_filter_size): #Unet-cnn model 
     inputs = Input((height, width, channels))
     s = Lambda(lambda x: x/255)(inputs)
-
-
 
     for i in range(num_layers):
         if i == 0:
@@ -81,3 +85,57 @@ def dynamic_unet_cnn(height,width,channels,num_layers,starting_filter_size): #Un
     model = Model(inputs=[inputs], outputs=[outputs])
     
     return(model)
+
+def plot_figures(image,orig_mask,pred_mask,num): #function for plotting figures
+    plt.figure(num,figsize=(12,12))
+    plt.subplot(131)
+    plt.imshow(image)
+    plt.title("MR Image")
+    plt.subplot(132)
+    plt.imshow(orig_mask.squeeze(),cmap='gray')
+    plt.title("Original Mask")
+    plt.subplot(133)
+    plt.imshow(pred_mask.squeeze(),cmap='gray')
+    plt.title('Predicted Mask')
+
+def plot_acc_loss(results): #plot accuracy and loss
+    plt.plot(results.history['accuracy'])
+    plt.plot(results.history['val_accuracy'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+        
+    plt.plot(results.history['loss'])
+    plt.plot(results.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+
+def data_generator(dataset, image_path, mask_path, height, width): #function for generating data
+    X_train = np.zeros((len(dataset),height,width,3), dtype = np.uint8) #initialize training sets (and testing sets)
+    y_train = np.zeros((len(dataset),height,width,1), dtype = np.uint8)
+
+    sys.stdout.flush() #write everything to buffer ontime 
+
+    for i in tqdm(range(len(dataset)),total=len(dataset)): #iterate through datatset and build X_train,y_train
+
+        new_image_path = os.path.join(image_path,dataset.iloc[i][0])
+        new_mask_path = os.path.join(mask_path,dataset.iloc[i][1])
+
+        image = cv2.imread(new_image_path)
+        mask = cv2.imread(new_mask_path)[:,:,:1]
+
+        img_resized = cv2.resize(image,(height,width))
+        mask_resized = cv2.resize(mask,(height,width))
+
+        mask_resized = np.expand_dims(mask_resized,axis=2)
+
+        # img_resized = resize(image,(height,width), mode = 'constant',preserve_range = True)
+        # mask_resized = resize(mask, (height,width), mode = 'constant', preserve_range = True)
+
+        X_train[i] = img_resized
+        y_train[i] = mask_resized
+
+    return X_train, y_train

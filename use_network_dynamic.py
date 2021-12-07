@@ -23,11 +23,10 @@ import shutil
 import glob
 from natsort import natsorted
 
-from dynamic_unet import dynamic_unet_cnn
+from dynamic_unet import dynamic_unet_cnn, plot_figures
 
 plt.ion() #turn ploting on
 
-#dataset_path = r"C:\Users\cjoy1\Documents\Grad School\Second Year Spring\ECE 523\Homework\Final_Project\mr_images_png" #initialize paths and dataset
 dataset_path = os.getcwd()
 image_path = os.path.join(dataset_path, "testing")
 dataset = pd.read_csv('dataset.csv')
@@ -49,16 +48,6 @@ def data_generator(image_path, height, width): #function for generating data
         images[i] = img_resized
 
     return images
-
-def plot_figures(image,pred_mask,num): #function for plotting figures
-    plt.figure(num,figsize=(12,12))
-    plt.subplot(131)
-    plt.imshow(image)
-    plt.title("Input Image")
-    plt.subplot(132)
-    plt.imshow(pred_mask.squeeze(),cmap='gray')
-    plt.title('Predicted Mask')
- 
 
 total = len(dataset) #set variables
 test_split = 0.2
