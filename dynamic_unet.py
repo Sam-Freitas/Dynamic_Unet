@@ -91,17 +91,27 @@ def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size =
     
     return(model)
 
-def plot_figures(image,orig_mask,pred_mask,num): #function for plotting figures
-    plt.figure(num,figsize=(12,12))
-    plt.subplot(131)
-    plt.imshow(image)
-    plt.title("MR Image")
-    plt.subplot(132)
-    plt.imshow(orig_mask.squeeze(),cmap='gray')
-    plt.title("Original Mask")
-    plt.subplot(133)
-    plt.imshow(pred_mask.squeeze(),cmap='gray')
-    plt.title('Predicted Mask')
+def plot_figures(image,pred_mask,num, orig_mask = None): #function for plotting figures
+
+    if orig_mask is not None:
+        plt.figure(num,figsize=(12,12))
+        plt.subplot(131)
+        plt.imshow(image)
+        plt.title("Image")
+        plt.subplot(132)
+        plt.imshow(orig_mask.squeeze(),cmap='gray')
+        plt.title("Original Mask")
+        plt.subplot(133)
+        plt.imshow(pred_mask.squeeze(),cmap='gray')
+        plt.title('Predicted Mask')
+    else:
+        plt.figure(num)
+        plt.subplot(121)
+        plt.imshow(image)
+        plt.title("Image")
+        plt.subplot(122)
+        plt.imshow(pred_mask.squeeze(),cmap='gray')
+        plt.title('Predicted Mask')
 
 def plot_acc_loss(results): #plot accuracy and loss
     plt.plot(results.history['accuracy'])
@@ -118,9 +128,9 @@ def plot_acc_loss(results): #plot accuracy and loss
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
 
-def data_generator(dataset, image_path, mask_path, height, width): #function for generating data
+def data_generator(dataset, image_path, mask_path, height, width, channels): #function for generating data
     print('Loading in training data')
-    X_train = np.zeros((len(dataset),height,width,3), dtype = np.uint8) #initialize training sets (and testing sets)
+    X_train = np.zeros((len(dataset),height,width,channels), dtype = np.uint8) #initialize training sets (and testing sets)
     y_train = np.zeros((len(dataset),height,width,1), dtype = np.uint8)
 
     sys.stdout.flush() #write everything to buffer ontime 
@@ -130,13 +140,20 @@ def data_generator(dataset, image_path, mask_path, height, width): #function for
         new_image_path = os.path.join(image_path,dataset.iloc[i][0])
         new_mask_path = os.path.join(mask_path,dataset.iloc[i][1])
 
-        image = cv2.imread(new_image_path)
+        if channels == 1:
+            image = cv2.imread(new_image_path,0)
+            image = np.expand_dims(image,axis = -1)
+        else:
+            image = cv2.imread(new_image_path)
         mask = cv2.imread(new_mask_path)[:,:,:1]
 
         img_resized = cv2.resize(image,(height,width))
         mask_resized = cv2.resize(mask,(height,width))
 
-        mask_resized = np.expand_dims(mask_resized,axis=2)
+        # mask_resized = np.expand_dims(mask_resized,axis=2)
+
+        img_resized = np.atleast_3d(img_resized)
+        mask_resized = np.atleast_3d(mask_resized)
 
         # img_resized = resize(image,(height,width), mode = 'constant',preserve_range = True)
         # mask_resized = resize(mask, (height,width), mode = 'constant', preserve_range = True)

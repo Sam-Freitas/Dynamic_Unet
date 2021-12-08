@@ -23,16 +23,16 @@ dataset = pd.read_csv('dataset.csv')
  
 total = len(dataset) #set variables
 test_split = 0.2
-height = 512
-width = 512
-channels = 3 
+height = 128
+width = 128
+channels = 1 
 batch_size = 32
 
 num_layers_of_unet = 4
 starting_kernal_size = 16
 
 model = dynamic_unet_cnn(height,width,channels,
-    num_layers = num_layers_of_unet,starting_filter_size = starting_kernal_size, use_dropout = False)
+    num_layers = num_layers_of_unet,starting_filter_size = starting_kernal_size, use_dropout = True)
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'], run_eagerly = True)
 # model.summary() #display model summary
 
@@ -47,26 +47,28 @@ except:
 
 #######Training
 train, test = train_test_split(dataset, test_size = test_split, random_state = 50) #randomly split up the test and training datasets
-X_train, y_train = data_generator(train, image_path, mask_path, height, width) #set up training data
+X_train, y_train = data_generator(train, image_path, mask_path, height, width, channels) #set up training data
 y_train = y_train / 255 #thresh y_training set
 
-model_path = "lightsaver_weights.h5" #store model here
-checkpoint = ModelCheckpoint(model_path,monitor="val_loss",mode="min",save_best_only = True,verbose=1) #use checkpoint instead of sequential() module
+model_path = "lightsaver_weights" #store model here
+checkpoint_path = "model_checkpoints/cp.ckpt"
+checkpoint = ModelCheckpoint(filepath = checkpoint_path,monitor="val_loss",mode="min",save_best_only = True,verbose=1) #use checkpoint instead of sequential() module
 earlystop = EarlyStopping(monitor = 'val_loss', min_delta = 0.01, patience = 5, verbose = 1,restore_best_weights = True) #stop at best epoch
-results = model.fit(X_train, y_train, validation_split=0.1, batch_size=32, epochs=100,callbacks=[earlystop, checkpoint]) #fit model
+results = model.fit(X_train, y_train, validation_split=0.1, batch_size=32, epochs=5,callbacks=[earlystop, checkpoint]) #fit model
 
 plot_acc_loss(results) #plot the accuracy and loss functions
 
-model = load_model('lightsaver_weights.h5') #load weights
-preds_train = model.predict(X_train[:int(X_train.shape[0]*0.9)], verbose=1) 
-preds_train_t = (preds_train > 0.5).astype(np.uint8) #predict mask
-ix = random.randint(1, 10)
-plot_figures(X_train[ix],y_train[ix],preds_train[ix], 1) #plot images and masks
+model.load_weights(checkpoint_path)
+
+# preds_train = model.predict(X_train[:int(X_train.shape[0]*0.9)], verbose=1) 
+# preds_train_t = (preds_train > 0.5).astype(np.uint8) #predict mask
+# ix = random.randint(1, 10)
+# plot_figures(X_train[ix],y_train[ix],preds_train[ix], 1) #plot images and masks
 
 #######Testing
 
 #model = load_model("lightsaver_weights.h5") #reload model for testing
-X_test,y_test = data_generator(test,image_path, mask_path,height,width) #get test set
+X_test,y_test = data_generator(test,image_path, mask_path,height,width,channels) #get test set
 y_test = y_test / 255 #thresh y_test
 results = model.evaluate(X_test,y_test,steps=1) #get evaluation results
 
@@ -77,7 +79,7 @@ for image,mask in zip(X_test,y_test): #for loop for plotting images
     pred_mask = model.predict(img)
     pred_mask = (pred_mask > 0.5).astype(np.uint8)
 
-    plot_figures(image,mask,pred_mask, count)
+    plot_figures(image,pred_mask, count, orig_mask=mask)
     count += 1
 
     if count>20:
