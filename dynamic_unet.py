@@ -1,6 +1,7 @@
 from tensorflow.keras.models import Model 
 from tensorflow.keras.layers import Input, Dropout, Lambda, Conv2D, Conv2DTranspose, MaxPooling2D, concatenate
 from tensorflow.keras import backend as K
+from tensorflow.python.keras.engine import training
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -9,9 +10,11 @@ import sys
 import cv2
 import os
 
-def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size = 16, use_dropout = True): #Unet-cnn model 
+def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size = 16, use_dropout = False): #Unet-cnn model 
     inputs = Input((height, width, channels))
-    s = Lambda(lambda x: x/255)(inputs)
+    # s = Lambda(lambda x: x/255)(inputs)
+
+    s = inputs
 
     for i in range(num_layers):
         if i == 0:
@@ -19,8 +22,7 @@ def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size =
             # print(curr_filter_size)
 
             conv = Conv2D(curr_filter_size, (3,3), activation = 'elu', kernel_initializer = 'he_normal', padding = 'same') (s)
-            if use_dropout:
-                conv = Dropout(0.1)(conv)
+            conv = Dropout(0.1)(conv,training = use_dropout)
             conv = Conv2D(curr_filter_size, (3,3), activation = 'elu', kernel_initializer = 'he_normal', padding = 'same')(conv)
             pool = MaxPooling2D((2,2))(conv)
 
@@ -32,8 +34,7 @@ def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size =
             # print(curr_filter_size)
 
             conv_list.append(Conv2D(curr_filter_size, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same')(pool_list[i-1]))
-            if use_dropout:
-                conv_list[i] = Dropout(0.1) (conv_list[i])
+            conv_list[i] = Dropout(0.1) (conv_list[i],training = use_dropout)
             conv_list[i] = Conv2D(curr_filter_size, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (conv_list[i])
             pool = MaxPooling2D((2, 2)) (conv_list[i])
 
@@ -46,8 +47,7 @@ def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size =
     conv_list_reverse.reverse()
     
     conv_list.append(Conv2D(curr_filter_size, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (pool_list[num_layers-1]))
-    if use_dropout:
-        conv_list[-1] = Dropout(0.3) (conv_list[-1])
+    conv_list[-1] = Dropout(0.3) (conv_list[-1],training = use_dropout)
     conv_list[-1] = Conv2D(curr_filter_size, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (conv_list[-1])
 
     for i in range(num_layers):
@@ -58,8 +58,7 @@ def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size =
             u = Conv2DTranspose(curr_filter_size, (2, 2), strides=(2, 2), padding='same') (conv_list[-1])
             u = concatenate([u, conv_list_reverse[i]])
             conv_list.append(Conv2D(curr_filter_size, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (u))
-            if use_dropout:
-                conv_list[-1] = Dropout(0.1) (conv_list[-1])
+            conv_list[-1] = Dropout(0.1) (conv_list[-1],training = use_dropout)
             conv_list[-1] = Conv2D(curr_filter_size, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (conv_list[-1])
 
             u_list = list([u])
@@ -71,8 +70,7 @@ def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size =
             u_list.append(Conv2DTranspose(curr_filter_size, (2, 2), strides=(2, 2), padding='same') (conv_list[-1]))
             u_list[i] = concatenate([u_list[i], conv_list_reverse[i]],axis=3)
             conv_list.append(Conv2D(curr_filter_size, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (u_list[i]))
-            if use_dropout:
-                conv_list[-1] = Dropout(0.1) (conv_list[-1])
+            conv_list[-1] = Dropout(0.1) (conv_list[-1],training = use_dropout)
             conv_list[-1] = Conv2D(curr_filter_size, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (conv_list[-1])
 
         else: 
@@ -82,8 +80,7 @@ def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size =
             u_list.append(Conv2DTranspose(curr_filter_size, (2, 2), strides=(2, 2), padding='same') (conv_list[-1]))
             u_list[i] = concatenate([u_list[i], conv_list_reverse[i]])
             conv_list.append(Conv2D(curr_filter_size, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (u_list[i]))
-            if use_dropout:
-                conv_list[-1] = Dropout(0.1) (conv_list[-1])
+            conv_list[-1] = Dropout(0.1) (conv_list[-1],training = use_dropout)
             conv_list[-1] = Conv2D(curr_filter_size, (3, 3), activation='elu', kernel_initializer='he_normal', padding='same') (conv_list[-1])
 
     outputs = Conv2D(1, (1, 1), activation='sigmoid') (conv_list[-1])
@@ -133,6 +130,9 @@ def data_generator(dataset, image_path, mask_path, height, width, channels): #fu
     X_train = np.zeros((len(dataset),height,width,channels), dtype = np.uint8) #initialize training sets (and testing sets)
     y_train = np.zeros((len(dataset),height,width,1), dtype = np.uint8)
 
+    X_train = np.zeros((len(dataset),height,width,channels)) #initialize training sets (and testing sets)
+    y_train = np.zeros((len(dataset),height,width,1))
+
     sys.stdout.flush() #write everything to buffer ontime 
 
     for i in tqdm(range(len(dataset)),total=len(dataset)): #iterate through datatset and build X_train,y_train
@@ -152,8 +152,8 @@ def data_generator(dataset, image_path, mask_path, height, width, channels): #fu
 
         # mask_resized = np.expand_dims(mask_resized,axis=2)
 
-        img_resized = np.atleast_3d(img_resized)
-        mask_resized = np.atleast_3d(mask_resized)
+        img_resized = np.atleast_3d(img_resized).astype(np.float64)
+        mask_resized = np.atleast_3d(mask_resized).astype(np.float64)
 
         # img_resized = resize(image,(height,width), mode = 'constant',preserve_range = True)
         # mask_resized = resize(mask, (height,width), mode = 'constant', preserve_range = True)

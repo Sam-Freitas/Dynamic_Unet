@@ -59,14 +59,26 @@ width = 128
 channels = 1 
 batch_size = 32
 
-num_layers_of_unet = 4
+## 128 - 2
+## 512 - 4
+## 1024 - 6 ???????
+
+num_layers_of_unet = 2
 starting_kernal_size = 16
 
-model = dynamic_unet_cnn(height,width,channels,num_layers_of_unet,starting_kernal_size)
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'], run_eagerly = True)
-# model.summary() #display model summary
+# model = dynamic_unet_cnn(height,width,channels,
+#     num_layers = num_layers_of_unet,starting_filter_size = starting_kernal_size, 
+#     use_dropout = False)
+# model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'], run_eagerly = True)
+# # model.summary() #display model summary
 
-model = load_model('model_checkpoints/cp.ckpt') #load weights
+# model = load_model('training_1') #load weights
+checkpoint_path = "training_1/cp.ckpt" 
+print('Loading in model from best checkpoint')
+new_model = dynamic_unet_cnn(height,width,channels,
+    num_layers = num_layers_of_unet,starting_filter_size = starting_kernal_size, use_dropout = False)
+new_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+new_model.load_weights(checkpoint_path)
 
 #model = load_model("lightsaver_weights.h5") #reload model for testing
 images = data_generator(image_path,height,width,channels) #get test set
@@ -84,7 +96,8 @@ count = 1 #counter for figures in for loops
 for image in images: #for loop for plotting images
     
     img = image.reshape((1,height,width,channels))
-    pred_mask = model.predict(img)
+    img = img.astype(np.float64)
+    pred_mask = new_model.predict(img)
     # pred_mask = (pred_mask > 0.5).astype(np.uint8)
 
     plot_figures(image,pred_mask, count)
