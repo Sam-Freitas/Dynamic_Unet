@@ -12,8 +12,6 @@ import os
 
 def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size = 16, use_dropout = False): #Unet-cnn model 
     inputs = Input((height, width, channels))
-    # s = Lambda(lambda x: x/255)(inputs)
-
     s = inputs
 
     for i in range(num_layers):

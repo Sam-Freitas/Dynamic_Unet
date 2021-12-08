@@ -38,13 +38,12 @@ starting_kernal_size = 16
 model = dynamic_unet_cnn(height,width,channels,
     num_layers = num_layers_of_unet,starting_filter_size = starting_kernal_size, use_dropout = True)
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'], run_eagerly = True)
-# model.summary() #display model summary
+# model.summary() #display model summary, Better to just view the model.png
 
 try:
     tf.keras.utils.plot_model(
         model, to_file='model.png', show_shapes=True, show_dtype=False,
-        show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96
-    )
+        show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96)
 except:
     print("Exporting model to png failed")
     print("Necessary packages: pydot (pip) and graphviz (brew)")

@@ -34,7 +34,6 @@ dataset = pd.read_csv('dataset.csv')
 def data_generator(image_path, height, width,channels): #function for generating data
 
     dataset = natsorted(glob.glob(os.path.join(image_path,'*.png')))
-
     images = np.zeros((len(dataset),height,width,channels), dtype = np.uint8) #initialize training sets (and testing sets)
 
     sys.stdout.flush() #write everything to buffer ontime 
@@ -47,7 +46,6 @@ def data_generator(image_path, height, width,channels): #function for generating
             image = imread(this_img_path)
 
         img_resized = cv2.resize(image,(height,width))
-
         images[i] = np.atleast_3d(img_resized)
 
     return images
@@ -66,13 +64,6 @@ batch_size = 32
 num_layers_of_unet = 2
 starting_kernal_size = 16
 
-# model = dynamic_unet_cnn(height,width,channels,
-#     num_layers = num_layers_of_unet,starting_filter_size = starting_kernal_size, 
-#     use_dropout = False)
-# model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'], run_eagerly = True)
-# # model.summary() #display model summary
-
-# model = load_model('training_1') #load weights
 checkpoint_path = "training_1/cp.ckpt" 
 print('Loading in model from best checkpoint')
 new_model = dynamic_unet_cnn(height,width,channels,
@@ -80,10 +71,8 @@ new_model = dynamic_unet_cnn(height,width,channels,
 new_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 new_model.load_weights(checkpoint_path)
 
-#model = load_model("lightsaver_weights.h5") #reload model for testing
 images = data_generator(image_path,height,width,channels) #get test set
 images = images / 255 #thresh y_test
-# results = model.evaluate(X_test,y_test,steps=1) #get evaluation results
 
 output_path = os.path.join(os.getcwd(),'output_images')
 try:
@@ -98,7 +87,6 @@ for image in images: #for loop for plotting images
     img = image.reshape((1,height,width,channels))
     img = img.astype(np.float64)
     pred_mask = new_model.predict(img)
-    # pred_mask = (pred_mask > 0.5).astype(np.uint8)
 
     plot_figures(image,pred_mask, count)
     count += 1
