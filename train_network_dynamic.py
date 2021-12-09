@@ -62,7 +62,7 @@ checkpoint = ModelCheckpoint(filepath = checkpoint_path, monitor = "val_loss", m
 earlystop = EarlyStopping(monitor = 'val_loss', 
     patience = 500, verbose = 1, restore_best_weights = True) #stop at best epoch
 results = model.fit(X_train, y_train, validation_split = 0.1, batch_size = batch_size, 
-    epochs = 1000,callbacks = [earlystop, checkpoint]) #fit model
+    epochs = 1,callbacks = [earlystop, checkpoint]) #fit model
 
 # plot_acc_loss(results) #plot the accuracy and loss functions
 
@@ -84,11 +84,12 @@ for image,mask in zip(X_test,y_test): #for loop for plotting images
     img = image.reshape((1,height,width,channels))
     pred_mask = new_model.predict(img)
 
-    plot_figures(image,pred_mask, count, orig_mask=mask)
+    plot_figures(image,pred_mask, count, orig_mask=mask,ext = 'training')
     count += 1
 
-# plt.ioff()
-# plt.show()
+plt.ioff()
+plt.close('all')
+plt.show()
 
 import use_network_dynamic
 

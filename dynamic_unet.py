@@ -87,9 +87,9 @@ def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size =
     
     return(model)
 
-def plot_figures(image,pred_mask,num, orig_mask = None): #function for plotting figures
+def plot_figures(image,pred_mask,num, orig_mask = None,ext = ''): #function for plotting figures
 
-    output_path = os.path.join(os.getcwd(),'output_images')
+    output_path = os.path.join(os.getcwd(),'output_images' + '_' + ext)
 
     try:
         os.mkdir(output_path)

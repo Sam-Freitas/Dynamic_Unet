@@ -80,8 +80,9 @@ for image in images: #for loop for plotting images
     img = img.astype(np.float64)
     pred_mask = new_model.predict(img)
 
-    plot_figures(image,pred_mask, count)
+    plot_figures(image,pred_mask, count, ext = 'testing')
     count += 1
 
 plt.ioff()
+plt.close('all')
 plt.show()
