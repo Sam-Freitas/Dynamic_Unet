@@ -22,7 +22,7 @@ mask_path = os.path.join(dataset_path,"masks")
 dataset = pd.read_csv('dataset.csv')
  
 total = len(dataset) #set variables
-test_split = 0.2
+test_split = 10/total
 height = 128
 width = 128
 channels = 1 
@@ -54,15 +54,15 @@ X_train, y_train = data_generator(train, image_path, mask_path, height, width, c
 y_train = y_train / 255 #thresh y_training set
 X_train = X_train / 255
 
-checkpoint_path = "training_1/cp.ckpt" 
+checkpoint_path = "training_2/cp.ckpt" 
 checkpoint_dir = os.path.dirname(checkpoint_path)
 
-checkpoint = ModelCheckpoint(filepath = checkpoint_path,monitor="val_loss",mode="min",
-    save_best_only = True,verbose=1,save_weights_only=True) #use checkpoint instead of sequential() module
-earlystop = EarlyStopping(monitor = 'val_loss', min_delta = 0.01, 
-    patience = 15, verbose = 1,restore_best_weights = True) #stop at best epoch
-results = model.fit(X_train, y_train, validation_split=0.1, batch_size=batch_size, 
-    epochs=100,callbacks=[earlystop, checkpoint]) #fit model
+checkpoint = ModelCheckpoint(filepath = checkpoint_path, monitor = "val_loss", mode = "min",
+    save_best_only = True, verbose = 1, save_weights_only = True) #use checkpoint instead of sequential() module
+earlystop = EarlyStopping(monitor = 'val_loss', 
+    patience = 500, verbose = 1, restore_best_weights = True) #stop at best epoch
+results = model.fit(X_train, y_train, validation_split = 0.1, batch_size = batch_size, 
+    epochs = 1000,callbacks = [earlystop, checkpoint]) #fit model
 
 # plot_acc_loss(results) #plot the accuracy and loss functions
 
@@ -87,8 +87,9 @@ for image,mask in zip(X_test,y_test): #for loop for plotting images
     plot_figures(image,pred_mask, count, orig_mask=mask)
     count += 1
 
-    if count>20:
-        break
+# plt.ioff()
+# plt.show()
 
-plt.ioff()
-plt.show()
+import use_network_dynamic
+
+use_network_dynamic()

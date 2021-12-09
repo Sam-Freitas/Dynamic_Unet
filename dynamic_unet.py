@@ -6,6 +6,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
+import shutil
 import sys
 import cv2
 import os
@@ -88,6 +89,13 @@ def dynamic_unet_cnn(height,width,channels,num_layers = 4,starting_filter_size =
 
 def plot_figures(image,pred_mask,num, orig_mask = None): #function for plotting figures
 
+    output_path = os.path.join(os.getcwd(),'output_images')
+
+    try:
+        os.mkdir(output_path)
+    except:
+        pass
+
     if orig_mask is not None:
         plt.figure(num,figsize=(12,12))
         plt.subplot(131)
@@ -107,6 +115,10 @@ def plot_figures(image,pred_mask,num, orig_mask = None): #function for plotting 
         plt.subplot(122)
         plt.imshow(pred_mask.squeeze(),cmap='gray')
         plt.title('Predicted Mask')
+
+    output_name = os.path.join(output_path,str(num) + '.png')
+
+    plt.savefig(output_name)
 
 def plot_acc_loss(results): #plot accuracy and loss
     plt.plot(results.history['accuracy'])

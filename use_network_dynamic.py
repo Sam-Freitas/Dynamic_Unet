@@ -19,7 +19,6 @@ from tensorflow.keras.layers import Input, Dropout, Lambda, Conv2D, Conv2DTransp
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras import backend as K
 import tensorflow as tf
-import shutil
 import glob
 from natsort import natsorted
 
@@ -74,13 +73,6 @@ new_model.load_weights(checkpoint_path)
 images = data_generator(image_path,height,width,channels) #get test set
 images = images / 255 #thresh y_test
 
-output_path = os.path.join(os.getcwd(),'output_images')
-try:
-    os.mkdir(output_path)
-except:
-    shutil.rmtree(output_path)
-    os.mkdir(output_path)
-
 count = 1 #counter for figures in for loops
 for image in images: #for loop for plotting images
     
@@ -90,9 +82,6 @@ for image in images: #for loop for plotting images
 
     plot_figures(image,pred_mask, count)
     count += 1
-
-    if count>10:
-        break
 
 plt.ioff()
 plt.show()
