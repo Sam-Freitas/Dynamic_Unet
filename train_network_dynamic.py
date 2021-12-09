@@ -62,7 +62,7 @@ checkpoint = ModelCheckpoint(filepath = checkpoint_path, monitor = "val_loss", m
 earlystop = EarlyStopping(monitor = 'val_loss', 
     patience = 500, verbose = 1, restore_best_weights = True) #stop at best epoch
 results = model.fit(X_train, y_train, validation_split = 0.1, batch_size = batch_size, 
-    epochs = 1,callbacks = [earlystop, checkpoint]) #fit model
+    epochs = 1000,callbacks = [earlystop, checkpoint]) #fit model
 
 # plot_acc_loss(results) #plot the accuracy and loss functions
 

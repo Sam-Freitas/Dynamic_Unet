@@ -50,7 +50,6 @@ def data_generator(image_path, height, width,channels): #function for generating
     return images
 
 total = len(dataset) #set variables
-test_split = 0.2
 height = 128
 width = 128
 channels = 1 
@@ -63,7 +62,7 @@ batch_size = 32
 num_layers_of_unet = 2
 starting_kernal_size = 16
 
-checkpoint_path = "training_1/cp.ckpt" 
+checkpoint_path = "training_2/cp.ckpt" 
 print('Loading in model from best checkpoint')
 new_model = dynamic_unet_cnn(height,width,channels,
     num_layers = num_layers_of_unet,starting_filter_size = starting_kernal_size, use_dropout = False)
